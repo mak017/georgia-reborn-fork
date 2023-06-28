@@ -27,7 +27,7 @@ function drawBackgrounds(gr) {
 			pref.layout === 'default' &&  displayCustomThemeMenu && !displayPlaylist && !displayLibrary && !displayBiography ? ww * 0.3 :
 			pref.layout === 'default' && !displayCustomThemeMenu && !displayPlaylist && !displayLibrary && !displayBiography ||
 			pref.layout === 'artwork' &&  displayPlaylist ? ww : 0;
-		albumArtSize.w = ww * 0.5;
+		albumArtSize.w = ww * 0.35;
 		albumArtSize.y = geo.topMenuHeight;
 		albumArtSize.h = wh - geo.topMenuHeight - geo.lowerBarHeight;
 		if (!themeColorSet) {
@@ -63,7 +63,7 @@ function drawPanels(gr) {
 			libraryPanel.on_paint(gr);
 			drawLibraryProfiler && drawLibraryProfiler.Print();
 		}
-		if (pref.layout === 'default' && displayPlaylist || pref.layout === 'artwork' && displayPlaylistArtworkLayout || displayPlaylistLibrary()) {
+		if (pref.layout === 'default' && displayPlaylist || pref.layout === 'artwork' && displayPlaylistArtworkLayout || displayPlaylistLibrary() || displayDetails) {
 			const drawPlaylistProfiler = timings.showExtraDrawTiming ? fb.CreateProfiler('on_paint -> playlist') : null;
 			playlist.on_paint(gr);
 			timings.showExtraDrawTiming && drawPlaylistProfiler.Print();
@@ -95,14 +95,14 @@ function drawAlbumArt(gr) {
 	if (displayPlaylistLibrary()) return;
 
 	if (pref.layout === 'default' && fb.IsPlaying && (displayPlaylist && pref.playlistLayout !== 'full' && !displayBiography || displayLibrary && pref.libraryLayout === 'normal' || pref.displayLyrics) ||
-		!displayPlaylist && !displayPlaylistArtworkLayout && !displayLibrary && !displayBiography) {
+		!displayPlaylistArtworkLayout && !displayLibrary && !displayBiography) {
 		const drawArt = timings.showExtraDrawTiming ? fb.CreateProfiler('on_paint -> artwork') : null;
-		const displayDetails = (pref.layout === 'artwork' ? !displayPlaylistArtworkLayout : !displayPlaylist) && !displayLibrary && !displayBiography;
+		const displayDetails = (pref.layout === 'artwork' ? !displayPlaylistArtworkLayout : true) && !displayLibrary && !displayBiography;
 
 		// * noAlbumArtStub if no album cover exist * //
 		if (!albumArt && noArtwork && fb.IsPlaying) {
 			if (pref.layout === 'default' && fb.IsPlaying && (displayPlaylist && pref.playlistLayout !== 'full' && !displayBiography || displayLibrary && pref.libraryLayout === 'normal') ||
-				pref.layout === 'default' && !displayPlaylist && !displayPlaylistArtworkLayout && !displayLibrary && !displayBiography && pref.displayLyrics ||
+				pref.layout === 'default' && !displayPlaylistArtworkLayout && !displayLibrary && !displayBiography && pref.displayLyrics ||
 				pref.layout === 'artwork' && !displayPlaylist && !displayPlaylistArtworkLayout && !displayLibrary && !displayBiography) {
 
 				// * Clear previous artwork related stuff
@@ -114,10 +114,10 @@ function drawAlbumArt(gr) {
 				const heightCorr = scaleForDisplay(14);
 
 				// * Stub background
-				gr.FillSolidRect(0, geo.topMenuHeight, pref.lyricsLayout === 'full' && pref.displayLyrics || pref.layout === 'artwork' ? ww : ww * 0.5, wh - geo.topMenuHeight - geo.lowerBarHeight, g_pl_colors.bg);
+				gr.FillSolidRect(0, geo.topMenuHeight, pref.lyricsLayout === 'full' && pref.displayLyrics || pref.layout === 'artwork' ? ww : ww * 0.35, wh - geo.topMenuHeight - geo.lowerBarHeight, g_pl_colors.bg);
 				if (!pref.displayLyrics) {
 					gr.SetTextRenderingHint(TextRenderingHint.AntiAliasGridFit);
-					gr.DrawString('\uf001', ft.no_album_art_stub, col.noAlbumArtStub, 0, 0, pref.layout === 'artwork' ? ww : ww * 0.5, wh - geo.topMenuHeight - geo.lowerBarHeight + ft.no_album_art_stub.Height * 0.5 - heightCorr, StringFormat(1, 1));
+					gr.DrawString('\uf001', ft.no_album_art_stub, col.noAlbumArtStub, 0, 0, pref.layout === 'artwork' ? ww : ww * 0.35, wh - geo.topMenuHeight - geo.lowerBarHeight + ft.no_album_art_stub.Height * 0.5 - heightCorr, StringFormat(1, 1));
 				}
 			}
 		} else { noAlbumArtStub = false; }
@@ -202,7 +202,7 @@ function drawDetailsMetadataGrid(gr) {
 	gr.SetSmoothingMode(SmoothingMode.AntiAliasGridFit);
 	gr.SetInterpolationMode(InterpolationMode.HighQualityBicubic);
 
-	const displayDetails = (pref.layout === 'artwork' ? !displayPlaylistArtworkLayout : !displayPlaylist) && !displayLibrary && !displayBiography;
+	const displayDetails = !displayLibrary && !displayBiography;
 	const marginLeft = scaleForDisplay(pref.layout !== 'default' ? 20 : 40);
 	gridTop = albumArtSize.y ? albumArtSize.y + marginLeft : geo.topMenuHeight + marginLeft;
 
@@ -232,7 +232,7 @@ function drawDetailsMetadataGrid(gr) {
 			let gridAlbumTxtRec;
 
 			function drawArtist(top) {
-				if (!str.artist) return 0;
+				if (!str.album_artist) return 0;
 
 				const flagSizeWhiteSpace =
 				gridArtistFontSize === 24 ? ' '.repeat(flagImgs.length >= 6 ? 35 : flagImgs.length === 5 ? 29 : flagImgs.length === 4 ? 24 : flagImgs.length === 3 ? 18 : flagImgs.length === 2 ? 12 : 6) :
@@ -257,17 +257,17 @@ function drawDetailsMetadataGrid(gr) {
 				flagImgs.length === 2 ? scaleForDisplay(28 + gridArtistFontSize * 2) :
 				flagImgs.length === 1 ? scaleForDisplay(14 + gridArtistFontSize) : '';
 
-				gridArtistTxtRec = gr.MeasureString(str.artist, ft.grd_artist, 0, 0, showGridArtistFlags && flagImgs.length ? textWidth - flagSize : textWidth, wh);
+				gridArtistTxtRec = gr.MeasureString(str.album_artist, ft.grd_artist, 0, 0, showGridArtistFlags && flagImgs.length ? textWidth - flagSize : textWidth, wh);
 				const gridArtistNumLines  = Math.min(2, gridArtistTxtRec.Lines);
-				const gridArtistNumHeight = gr.CalcTextHeight(str.artist, ft.grd_artist) * gridArtistNumLines + 3;
-				const gridArtistHeight    = gr.CalcTextHeight(str.artist, ft.grd_artist);
+				const gridArtistNumHeight = gr.CalcTextHeight(str.album_artist, ft.grd_artist) * gridArtistNumLines + 3;
+				const gridArtistHeight    = gr.CalcTextHeight(str.album_artist, ft.grd_artist);
 
 				// * Apply better anti-aliasing on smaller font sizes in HD res
 				gr.SetTextRenderingHint(!is_4k && gridArtistFontSize < 18 ? TextRenderingHint.ClearTypeGridFit : TextRenderingHint.AntiAliasGridFit);
-				gr.DrawString(showGridArtistFlags && flagImgs.length ? flagSizeWhiteSpace + str.artist : str.artist, ft.grd_artist, ['white', 'black', 'reborn', 'random'].includes(pref.theme) ? col.detailsText : pref.theme === 'cream' ? g_pl_colors.header_artist_normal : g_pl_colors.header_artist_playing, marginLeft, Math.round(top), textWidth, gridArtistNumHeight, g_string_format.trim_ellipsis_char);
+				gr.DrawString(showGridArtistFlags && flagImgs.length ? flagSizeWhiteSpace + str.album_artist : str.album_artist, ft.grd_artist, ['white', 'black', 'reborn', 'random'].includes(pref.theme) ? col.detailsText : pref.theme === 'cream' ? g_pl_colors.header_artist_normal : g_pl_colors.header_artist_playing, marginLeft, Math.round(top), textWidth, gridArtistNumHeight, g_string_format.trim_ellipsis_char);
 
 				// * Artist flags
-				if (str.artist && flagImgs.length && showGridArtistFlags && displayDetails) {
+				if (str.album_artist && flagImgs.length && showGridArtistFlags && displayDetails) {
 					let flagsLeft = marginLeft;
 					for (let i = 0; i < flagImgs.length; i++) {
 						gr.DrawImage(flagImgs[i], flagsLeft, Math.round(top - (flagImgs[i].Height / (gridArtistHeight + scaleForDisplay(2))) - (is_4k ? 1 : 0)), flagImgs[i].Width + scaleForDisplay(gridArtistFontSize) - scaleForDisplay(26), gridArtistHeight + scaleForDisplay(2), 0, 0, flagImgs[i].Width, flagImgs[i].Height);
@@ -452,7 +452,7 @@ function drawDetailsMetadataGrid(gr) {
 
 /** Draws the band logo on the bottom left side in the Details panel */
 function drawDetailsBandLogo(gr) {
-	if (fb.IsPlaying && albumArt && !displayPlaylist && !displayLibrary && !displayBiography && pref.layout === 'default') {
+	if (fb.IsPlaying && albumArt && !displayLibrary && !displayBiography && pref.layout === 'default') {
 		const drawLogos = timings.showExtraDrawTiming ? fb.CreateProfiler('on_paint -> logos') : null;
 		const marginLeft = scaleForDisplay(pref.layout !== 'default' ? 20 : 40);
 		const availableSpace = albumArtSize.y + albumArtSize.h - gridTop;
@@ -482,7 +482,7 @@ function drawDetailsBandLogo(gr) {
 
 /** Draws the label logo on the bottom right side in the Details panel */
 function drawDetailsLabelLogo(gr) {
-	if (fb.IsPlaying && albumArt && !displayPlaylist && !displayLibrary && !displayBiography && pref.layout === 'default') {
+	if (fb.IsPlaying && albumArt && !displayLibrary && !displayBiography && pref.layout === 'default') {
 		const drawLogos = timings.showExtraDrawTiming ? fb.CreateProfiler('on_paint -> labels') : null;
 
 		if (recordLabels.length > 0) {
@@ -630,7 +630,7 @@ function drawStyles(gr) {
 		gr.SetSmoothingMode(SmoothingMode.None);
 		if (fb.IsPlaying && ((displayPlaylist || displayLibrary) && !displayBiography && pref.layout === 'default' || (!displayPlaylistArtworkLayout && !displayLibrary && !displayBiography) && pref.layout === 'artwork')) {
 			// Fill gap when album art or player size is not proportional
-			gr.FillSolidRect(-1, geo.topMenuHeight, pref.layout === 'default' ? ww * 0.5 + 1 : ww + 1, (displayLibrary && pref.libraryLayout === 'full' ? 0 : albumArtSize.y) - geo.topMenuHeight - 1, RGBtoRGBA(col.styleBevel, 40));
+			gr.FillSolidRect(-1, geo.topMenuHeight, pref.layout === 'default' ? ww * 0.575 + 1 : ww + 1, (displayLibrary && pref.libraryLayout === 'full' ? 0 : albumArtSize.y) - geo.topMenuHeight - 1, RGBtoRGBA(col.styleBevel, 40));
 		}
 		if (!['black', 'nblue', 'ngreen', 'nred', 'ngold'].includes(pref.theme) && !pref.styleBlackAndWhite2 && !pref.styleRebornBlack) {
 			const customThemes = ['custom01', 'custom02', 'custom03', 'custom04', 'custom05', 'custom06', 'custom07', 'custom08', 'custom09', 'custom10'].includes(pref.theme);
@@ -674,7 +674,7 @@ function drawPanelShadows(gr) {
 
 		if (displayDetails && !pref.noDiscArtBg && !noAlbumArtStub) {
 			// Middle shadow
-			gr.FillGradRect(noAlbumArtStub ? ww * 0.5 - 4 : albumArtSize.x + albumArtSize.w, noAlbumArtStub ? geo.topMenuHeight : albumArtSize.y - 3, 4, noAlbumArtStub ? wh - geo.topMenuHeight - geo.lowerBarHeight : albumArtSize.h + 5, 0.5,
+			gr.FillGradRect(noAlbumArtStub ? ww * 0.575 - 4 : albumArtSize.x + albumArtSize.w, noAlbumArtStub ? geo.topMenuHeight : albumArtSize.y - 3, 4, noAlbumArtStub ? wh - geo.topMenuHeight - geo.lowerBarHeight : albumArtSize.h + 5, 0.5,
 				noAlbumArtStub ? 0 : pref.styleBlackAndWhite ? RGB(0, 0, 0) : col.shadow, noAlbumArtStub ? pref.styleBlackAndWhite ? RGB(0, 0, 0) : col.shadow : 0);
 		}
 		// Bottom shadow
@@ -686,7 +686,7 @@ function drawPanelShadows(gr) {
 	if (displayPlaylist && pref.layout !== 'artwork' || displayPlaylistArtworkLayout || displayLibrary || displayBiography || displayCustomThemeMenu && !fb.IsPlaying) {
 
 		const normalLayout = pref.layout === 'default' && (pref.playlistLayout === 'normal' && displayPlaylist && !displayBiography || pref.libraryLayout === 'normal' && displayLibrary || pref.biographyLayout === 'normal' && displayBiography || displayPlaylistLibrary());
-		const x = displayPlaylistLibrary() || displayBiography || displayCustomThemeMenu && !fb.IsPlaying || pref.layout !== 'default' || !normalLayout ? 0 : ww * 0.5;
+		const x = displayPlaylistLibrary() || displayBiography || displayCustomThemeMenu && !fb.IsPlaying || pref.layout !== 'default' || !normalLayout ? 0 : ww * 0.575;
 		gr.SetSmoothingMode(SmoothingMode.AntiAliasGridFit);
 
 		// Top shadow
@@ -694,10 +694,10 @@ function drawPanelShadows(gr) {
 
 		if (normalLayout) {
 			// Middle shadow for playlist
-			gr.FillGradRect(ww * 0.5 - 4, geo.topMenuHeight, 4, wh - geo.topMenuHeight - geo.lowerBarHeight, 0.5, 0,
+			gr.FillGradRect(ww * 0.575 - 4, geo.topMenuHeight, 4, wh - geo.topMenuHeight - geo.lowerBarHeight, 0.5, 0,
 				pref.styleBlackAndWhite && noAlbumArtStub ? RGB(0, 0, 0) : pref.styleBlackAndWhite2 || pref.styleRebornBlack ? RGBA(0, 0, 0, 30) : col.shadow);
 			// Middle shadow for album art
-			if (albumArt && albumArtSize.w !== ww * 0.5 && !displayBiography && !noAlbumArtStub) {
+			if (albumArt && albumArtSize.w !== ww * 0.575 && !displayBiography && !noAlbumArtStub) {
 				gr.FillGradRect(albumArtSize.x + albumArtSize.w, albumArtSize.y, 4, albumArtSize.h, 0.5, pref.styleBlackAndWhite ? RGB(0, 0, 0) : col.shadow, 0);
 			}
 		}

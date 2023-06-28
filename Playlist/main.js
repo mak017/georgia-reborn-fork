@@ -264,7 +264,7 @@ function PlaylistPanel(x, y) {
 		}
 
 		if (pref.styleBlend && albumArt && blendedImg && (displayPlaylist || displayPlaylistArtworkLayout)) {
-			gr.DrawImage(blendedImg, displayPlaylistLibrary() ? ww * 0.5 : 0, 0, ww, wh, displayPlaylistLibrary() ? ww * 0.5 : 0, 0, blendedImg.Width, blendedImg.Height);
+			gr.DrawImage(blendedImg, displayPlaylistLibrary() ? ww * 0.575 : 0, 0, ww, wh, displayPlaylistLibrary() ? ww * 0.575 : 0, 0, blendedImg.Width, blendedImg.Height);
 		}
 
 		playlist.on_paint(gr);
@@ -291,7 +291,7 @@ function PlaylistPanel(x, y) {
 	// * PlaylistPanel.on_size
 	this.on_size = function (w, h) {
 		rescalePlaylist();
-		const x = pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.5 : 0;
+		const x = pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.575 : 0;
 		const y = geo.topMenuHeight;
 		const playlist_w = w - x;
 		const playlist_h = Math.max(0, h - geo.lowerBarHeight - y);
@@ -3061,7 +3061,7 @@ class PlaylistContent extends ListRowContent {
 					// @ts-ignore
 					const header = sub_items[i];
 					if (cur_row + header_h_in_rows - 1 >= row_shift /*&& !header.dont_draw*/) {
-						header.set_x(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.5 : 0);
+						header.set_x(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.575 : 0);
 						header.set_y(start_y + (cur_row - row_shift) * row_h);
 						return header;
 					}
@@ -3086,7 +3086,7 @@ class PlaylistContent extends ListRowContent {
 					cur_row += row_start_idx;
 
 					const row = sub_items[row_start_idx];
-					row.set_x(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.5 : 0);
+					row.set_x(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.575 : 0);
 					row.set_y(start_y + (cur_row - row_shift) * row_h);
 
 					return row;
@@ -3134,7 +3134,7 @@ class PlaylistContent extends ListRowContent {
 			for (let i = start_idx; i < sub_items.length; ++i) {
 				const item = sub_items[i];
 				if (start_item_used /* && !item.dont_draw*/) {
-					item.set_x(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.5 : 0);
+					item.set_x(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.575 : 0);
 					item.set_y(cur_y);
 
 					items_to_draw.push(item);
@@ -3614,7 +3614,7 @@ class DiscHeader extends BaseHeader {
 		gr.DrawString(disc_text, title_font, title_color, cur_x, this.y, this.w, this.h, disc_header_text_format);
 		const disc_w = Math.ceil(gr.MeasureString(disc_text, title_font, 0, 0, 0, 0).Width + 14);
 
-		const tracks_text = `${this.sub_items.length} Track${this.sub_items.length > 1 ? 's' : ''} - ${utils.FormatDuration(this.get_duration())}`;
+		const tracks_text = `${this.sub_items.length}${$('[ of $num(%totaltracks%,1)]', this.sub_items[0].metadb)} Track${this.sub_items.length > 1 ? 's' : ''} ${(parseInt($('$num(%totaltracks%,1)', this.sub_items[0].metadb), 10) === this.sub_items.length ? ' (\u2713)' : '')} - ${utils.FormatDuration(this.get_duration())}`;
 
 		const tracks_w = Math.ceil(gr.MeasureString(tracks_text, title_font, 0, 0, 0, 0).Width + 20);
 		const tracks_x = this.x + this.w - tracks_w - right_pad;
@@ -3861,9 +3861,23 @@ class Header extends BaseHeader {
 		}
 
 		const disc_number = (!this.grouping_handler.show_disc() && $('[%totaldiscs%]', this.metadb) !== '1') ? $('[ | Disc: %discnumber%[/%totaldiscs%]]', this.metadb) : '';
-		const track_text = is_radio ? '' : ' | ' +
-				(this.grouping_handler.show_disc() && has_discs ? this.sub_items.length + ' Discs - ' : '') +
-				track_count + (track_count === 1 ? ' Track' : ' Tracks');
+		const track_text = is_radio
+			? ""
+			: " | " +
+			  (this.grouping_handler.show_disc() && has_discs
+					? this.sub_items.length + " Discs - "
+					: "") +
+			  track_count +
+			  (this.grouping_handler.show_disc() && has_discs
+					? track_count === 1
+						? " Track"
+						: " Tracks"
+					: $("[ of $num(%totaltracks%,1)]", this.sub_items[0].metadb) +
+					  (track_count === 1 ? " Track" : " Tracks") +
+					  (parseInt($("$num(%totaltracks%,1)", this.sub_items[0].metadb), 10) ===
+					  this.sub_items.length
+							? " (\u2713)"
+							: ""));
 		let info_text = $(codec + disc_number + '[ | %replaygain_album_gain%]', this.metadb) + track_text;
 		if (hasGenreTags) {
 			info_text = ` | ${info_text}`;
@@ -4169,7 +4183,7 @@ class Header extends BaseHeader {
 					} else {
 						let i = 0;
 						let genre_hyperlink;
-						while (this.hyperlinks['genre' + i]) {
+						while (this.hyperlinks['genre' + i] && i < 5) {
 							if (i > 0) {
 								grClip.DrawString(' \u2022 ', g_pl_fonts.info, info_color, genre_hyperlink.x + genre_hyperlink.getWidth(), info_y, scaleForDisplay(20), info_h);
 							}
@@ -4757,6 +4771,10 @@ class Row extends ListItem {
 		this.count_text = undefined;
 		/** @type {?string} */
 		this.length_text = undefined;
+		/** @type {?string} */
+		this.bitrate_text = undefined;
+		/** @type {?string} */
+		this.bpm_text = undefined;
 
 		this.initialize_rating();
 
@@ -4900,6 +4918,54 @@ class Row extends ListItem {
 			right_pad += Math.max(length_w, Math.ceil(gr.MeasureString(this.length_text, title_font, 0, 0, 0, 0).Width + 10));
 		}
 
+		//---> Bitrate
+
+		if (this.bitrate_text == null) {
+			this.bitrate_text = $('[%bitrate%]', this.metadb);
+		}
+
+		const bitrate_w = scaleForDisplay(40);
+		if (this.bitrate_text) {
+			const bitrate_x = this.x + this.w - bitrate_w - right_pad;
+
+			gr.DrawString(
+				this.bitrate_text,
+				g_pl_fonts.playcount,
+				this.title_color,
+				bitrate_x,
+				this.y,
+				bitrate_w,
+				this.h,
+				g_string_format.h_align_center | g_string_format.v_align_center
+			);
+			testRect && gr.DrawRect(bitrate_x, this.y - 1, bitrate_w, this.h, 1, RGBA(155, 155, 255, 250));
+		}
+		right_pad += bitrate_w;
+
+		//---> BPM
+
+		if (this.bpm_text == null) {
+			this.bpm_text = $('[%bpm%]', this.metadb);
+		}
+
+		const bpm_w = scaleForDisplay(40);
+		if (this.bpm_text) {
+			const bpm_x = this.x + this.w - bpm_w - right_pad;
+
+			gr.DrawString(
+				this.bpm_text,
+				g_pl_fonts.playcount,
+				this.title_color,
+				bpm_x,
+				this.y,
+				bpm_w,
+				this.h,
+				g_string_format.h_align_center | g_string_format.v_align_center
+			);
+			testRect && gr.DrawRect(bpm_x, this.y - 1, bpm_w, this.h, 1, RGBA(155, 155, 255, 250));
+		}
+		right_pad += bpm_w;
+
 		// * RATING
 		if (g_properties.show_rating) {
 			this.rating.x = this.x + this.w - this.rating.w - right_pad;
@@ -4970,11 +5036,11 @@ class Row extends ListItem {
 
 			const title_query =
 				g_properties.show_header ? (pref.showPlaylistTrackNumbers || pref.showPlaylistIndexNumbers ? track_num_query : '') +
-					(pref.showArtistPlaylistRows && pref.showAlbumPlaylistRows && customTitle === '' ? `${margin}%artist% - %album% -  %title%[ '('%original artist%' cover)']` :
-					 pref.showArtistPlaylistRows && customTitle === '' ? `${margin}%artist% -  %title%[ '('%original artist%' cover)']` :
-					 pref.showAlbumPlaylistRows  && customTitle === '' ? `${margin}%album% -  %title%[ '('%original artist%' cover)']` :
-					customTitle !== '' ? `${margin}${customTitle}` : `${margin}%title%[ '('%original artist%' cover)']`) :
-				customTitleNoHeader !== '' ? `${margin}     ${customTitleNoHeader}` : `${margin}     %artist% - %album% - ${showTrackNum} %title%[ '('%original artist%' cover)']`;
+					(pref.showArtistPlaylistRows && pref.showAlbumPlaylistRows && customTitle === '' ? `${margin}%artist% - %album% -  %title%` :
+					 pref.showArtistPlaylistRows && customTitle === '' ? `${margin}%artist% -  %title%` :
+					 pref.showAlbumPlaylistRows  && customTitle === '' ? `${margin}%album% -  %title%` :
+					customTitle !== '' ? `${margin}${customTitle}` : `${margin}%title%`) :
+				customTitleNoHeader !== '' ? `${margin}     ${customTitleNoHeader}` : `${margin}     %artist% - %album% - ${showTrackNum} %title%`;
 
 			this.title_text = (fb.IsPlaying && this.is_playing && is_radio) ? $(title_query) : $(title_query, this.metadb);
 		}
@@ -5080,6 +5146,7 @@ class Row extends ListItem {
 		this.title_artist_text = undefined;
 		this.count_text = undefined;
 		this.length_text = undefined;
+		this.bpm_text = undefined;
 
 		// this.rating.reset_queried_data();
 	}
@@ -5139,10 +5206,10 @@ class Row extends ListItem {
 			}
 
 			const title_query = g_properties.show_header ? (pref.showPlaylistTrackNumbers || pref.showPlaylistIndexNumbers ? track_num_query : '') +
-				(pref.showArtistPlaylistRows && pref.showAlbumPlaylistRows ? `${margin}%artist% - %album% -  %title%[ '('%original artist%' cover)']` :
-				 pref.showArtistPlaylistRows ? `${margin}%artist% -  %title%[ '('%original artist%' cover)']` :
-				 pref.showAlbumPlaylistRows  ? `${margin}%album% -  %title%[ '('%original artist%' cover)']` :
-			`${margin}%title%[ '('%original artist%' cover)']`) : `%artist%$crlf()%album%$crlf()${track_num_query} %title%[ '('%original artist%' cover)']`;
+				(pref.showArtistPlaylistRows && pref.showAlbumPlaylistRows ? `${margin}%artist% - %album% -  %title%` :
+				 pref.showArtistPlaylistRows ? `${margin}%artist% -  %title%` :
+				 pref.showAlbumPlaylistRows  ? `${margin}%album% -  %title%` :
+			`${margin}%title%`) : `%artist%$crlf()%album%$crlf()${track_num_query} %title%`;
 
 			const title_text = (fb.IsPlaying && this.is_playing && is_radio) ? $(title_query) : $(title_query, this.metadb);
 
@@ -6711,7 +6778,7 @@ function PlaylistManager(x, y, w, h) {
 			headerFontSize === 10 ? is_4k ? -2 : -3 : '';
 
 		const info_w = gr.CalcTextWidth(info_text, g_pl_fonts.title_selected);
-		const btn_x = Math.round((pref.playlistLayout === 'normal' ? ww * 0.5 : 0) + (w - info_w) * 0.5);
+		const btn_x = Math.round((pref.playlistLayout === 'normal' ? ww * 0.575 : 0) + (w - info_w) * 0.5);
 		const btn_y = geo.topMenuHeight + yCorr;
 		const btns_w = Math.round(h);
 		const hasPlaylistHistory = playlistHistory.canBack() || playlistHistory.canForward();
@@ -7260,7 +7327,7 @@ Header.art_cache = new ArtImageCache(200);
 // * PLAYLIST INITIALIZATION * //
 /////////////////////////////////
 function initPlaylist() {
-	playlist = new PlaylistPanel(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.5 : 0, 0);
+	playlist = new PlaylistPanel(pref.layout === 'default' && (pref.playlistLayout === 'normal' || pref.playlistLayoutNormal && (displayBiography || pref.displayLyrics)) ? ww * 0.7 : 0, 0);
 	playlist.initialize();
 }
 

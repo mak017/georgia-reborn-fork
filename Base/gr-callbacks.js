@@ -104,6 +104,13 @@ function createButtonImages() {
 				w: transportCircleSize,
 				h: transportCircleSize
 			},
+			Random: {
+				ico: g_guifx.refresh,
+				font: ft.guifx,
+				type: 'transport',
+				w: transportCircleSize,
+				h: transportCircleSize
+			},
 			ShowVolume: {
 				ico: g_guifx.volume_down,
 				font: ft.guifx_volume,
@@ -530,6 +537,10 @@ function createButtonObjects(ww, wh) {
 			img = btnImg.Rating;
 			btns.rating = new Button(x, y, img[0].Width, h, 'Rating', img, 'Rate Song');
 		}
+
+		x += img[0].Width - correction;
+		img = btnImg.Properties;
+		btns.properties = new Button(x, y, img[0].Width, h, 'Properties', img, 'Properties');
 	}
 
 	// * Top menu 🗕 🗖 ✖ caption buttons
@@ -582,6 +593,7 @@ function createButtonObjects(ww, wh) {
 		btns.prev = new Button(calcX(++count), y, w, h, 'Previous', btnImg.Previous, 'Previous');
 		btns.play = new Button(calcX(++count), y, w, h, 'Play/Pause', !fb.IsPlaying || fb.IsPaused ? btnImg.Play : btnImg.Pause, 'Play');
 		btns.next = new Button(calcX(++count), y, w, h, 'Next', btnImg.Next, 'Next');
+		btns.random = new Button(calcX(++count), y, w, h, 'Playback/Random', btnImg.PlaybackShuffle, 'Random');
 
 		if (showPlaybackOrderBtn) {
 			if (plman.PlaybackOrder === 0) {
@@ -1184,15 +1196,15 @@ function updateMetadataGrid(currentLastPlayed, currentPlayingPlaylist) {
 			});
 		}
 	}
-	if (typeof currentLastPlayed !== 'undefined') {
-		const lp = str.grid.find(value => value.label === 'Last Played');
-		if (lp) {
-			lp.val = $date(currentLastPlayed);
-			if (calcAgeDateString(lp.val)) {
-				lp.val += ` (${calcAgeDateString(lp.val)})`;
-			}
-		}
-	}
+	// if (typeof currentLastPlayed !== 'undefined') {
+	// 	const lp = str.grid.find(value => value.label === 'Last Played');
+	// 	if (lp) {
+	// 		lp.val = $date(currentLastPlayed);
+	// 		if (calcAgeDateString(lp.val)) {
+	// 			lp.val += ` (${calcAgeDateString(lp.val)})`;
+	// 		}
+	// 	}
+	// }
 	if (typeof currentPlayingPlaylist !== 'undefined') {
 		const pl = str.grid.find(value => value.label === 'Playing List');
 		if (pl) {
@@ -1229,8 +1241,8 @@ async function updateStyle() {
 /** Called mostly when using the custom menu */
 function displayPanel(panel) {
 	switch (panel) {
-		case 'playlist':  displayPlaylist =  true; displayDetails = false; displayLibrary = false; displayBiography = false; pref.displayLyrics = false; break;
-		case 'details':   displayPlaylist = false; displayDetails =  true; displayLibrary = false; displayBiography = false; pref.displayLyrics = false; break;
+		case 'playlist':  displayPlaylist =  true; displayDetails = true; displayLibrary = false; displayBiography = false; pref.displayLyrics = false; break;
+		case 'details':   displayPlaylist = true; displayDetails =  true; displayLibrary = false; displayBiography = false; pref.displayLyrics = false; break;
 		case 'library':   displayPlaylist = false; displayDetails = false; displayLibrary =  true; displayBiography = false; pref.displayLyrics = false; break;
 		case 'biography': displayPlaylist = false; displayDetails = false; displayLibrary = false; displayBiography =  true; pref.displayLyrics = false; break;
 		case 'lyrics':    displayPlaylist =  true; displayDetails = false; displayLibrary = false; displayBiography =  true; pref.displayLyrics = true; break;
@@ -1555,7 +1567,7 @@ function displayPanelOnStartup() {
 		else displayPlaylist = true;
 	}
 	else if (pref.showPanelOnStartup === 'details' && pref.layout !== 'compact') {
-		displayPlaylist = pref.layout === 'artwork';
+		displayPlaylist = true;
 	}
 	else if (pref.showPanelOnStartup === 'library' && pref.layout !== 'compact') {
 		displayLibrary = true;
@@ -2082,13 +2094,13 @@ function resizeArtwork(resetDiscArtPosition) {
 		let xCenter = 0;
 		const albumScale =
 			pref.layout === 'artwork' ? Math.min(ww / albumArt.Width, (wh - lowerSpace - geo.topMenuHeight) / albumArt.Height) :
-			Math.min(((displayPlaylist || displayLibrary) ?
+			Math.min((displayLibrary ?
 				UIHacks.FullScreen ? pref.albumArtScale === 'filled' ? 0.545 * ww : 0.5 * ww :
 				UIHacks.MainWindowState === WindowState.Maximized ? pref.albumArtScale === 'filled' ? 0.55 * ww : 0.5 * ww :
 				0.5 * ww :
-			0.75 * ww) / albumArt.Width, (wh - lowerSpace - geo.topMenuHeight) / albumArt.Height);
+			0.375 * ww) / albumArt.Width, (wh - lowerSpace - geo.topMenuHeight) / albumArt.Height);
 
-		if (displayPlaylist || displayLibrary) {
+		if (displayLibrary) {
 			xCenter =
 				pref.layout === 'artwork' ? 0 :
 				UIHacks.FullScreen ? is_4k ? 0.261 * ww : 0.23 * ww :
@@ -2099,7 +2111,7 @@ function resizeArtwork(resetDiscArtPosition) {
 			xCenter = 0.56 * ww; // TODO: check if this is still needed?
 		}
 		else {
-			xCenter = 0.5 * ww;
+			xCenter = 0.393 * ww;
 			artOffCenter = false;
 			if (albumScale === 0.75 * ww / albumArt.Width) {
 				xCenter += 0.1 * ww;
@@ -2111,7 +2123,7 @@ function resizeArtwork(resetDiscArtPosition) {
 		albumArtSize.h = Math.floor(albumArt.Height * albumScale); // Height
 		albumArtSize.x = // * When player size is not proportional, album art is aligned via setting 'pref.albumArtAlign' in Default layout and is centered in Artwork layout */
 			pref.layout === 'default' ?
-				displayPlaylist || displayLibrary ?
+				displayLibrary ?
 					UIHacks.FullScreen || UIHacks.MainWindowState === WindowState.Maximized ? ww * 0.5 - albumArtSize.w :
 					pref.albumArtAlign === 'left' ? 0 :
 					pref.albumArtAlign === 'leftMargin' ? ww / wh > 1.8 ? scaleForDisplay(40) : 0 :
@@ -2223,10 +2235,10 @@ function resizeArtwork(resetDiscArtPosition) {
 			createDropShadow();
 		}
 	}
-	if ((displayLibrary || displayPlaylist) && pref.layout !== 'artwork') {
+	if ((displayLibrary) && pref.layout !== 'artwork') {
 		pauseBtn.setCoords(ww * 0.25, wh * 0.5 - geo.topMenuHeight);
 	} else {
-		pauseBtn.setCoords(ww * 0.5, wh * 0.5 - geo.topMenuHeight);
+		pauseBtn.setCoords(ww * 0.39, wh * 0.5 - geo.topMenuHeight);
 	}
 }
 
@@ -2860,6 +2872,7 @@ function on_metadb_changed(handle_list, fromhook) {
 			}
 			str.album = $(`[%album%][ '['${tf.album_translation}']']`);
 			str.album_subtitle = $(`[ '['${tf.album_subtitle}']']`);
+			str.album_artist = $(`[%album artist%]`);
 			let codec = $('$lower($if2(%codec%,$ext(%path%)))');
 			if (codec === 'dca (dts coherent acoustics)') {
 				codec = 'dts';

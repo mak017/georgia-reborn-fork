@@ -486,7 +486,7 @@ let jumpSearch = null;
 let playlistHistory;
 let playlistHistoryUsed; // Used for playlist scroll
 let state = {}; // Panel state
-let displayPlaylist = false;
+let displayPlaylist = true;
 let displayPlaylistArtworkLayout = false;
 let displayDetails = pref.showPanelOnStartup === 'details';
 let displayLibrary = false;

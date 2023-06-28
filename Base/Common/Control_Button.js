@@ -230,8 +230,8 @@ function btnActionHandler(btn) {
 			break;
 
 		case 'Details':
-			displayPlaylist = !displayPlaylist;
-			displayDetails = pref.layout === 'artwork' ? displayPlaylist : !displayPlaylist;
+			displayPlaylist = true;
+			displayDetails = pref.layout === 'artwork' ? displayPlaylist : true;
 			displayBiography = false;
 			if (pref.lyricsLayout !== 'full') pref.displayLyrics = false;
 			if (pref.lyricsActiveState) { pref.displayLyrics = true; initLyrics(); }
@@ -475,6 +475,9 @@ function btnActionHandler(btn) {
 			break;
 		case 'Next':
 			fb.Next();
+			break;
+		case 'Playback/Random':
+			fb.RunMainMenuCommand('Playback/Random');
 			break;
 		case 'PlaybackOrder':
 			switch (plman.PlaybackOrder) {
